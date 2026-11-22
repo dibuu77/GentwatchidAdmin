@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
@@ -54,6 +55,7 @@ const inputStyle = {
 };
 
 const labelStyle = { display: "block", marginBottom: "16px" };
+
 const sectionStyle = {
   background: "#fffefa",
   padding: "25px",
@@ -61,6 +63,7 @@ const sectionStyle = {
   marginBottom: "22px",
   border: "1px solid #e5e1d6",
 };
+
 const headingStyle = {
   fontSize: "20px",
   fontWeight: "700",
@@ -122,17 +125,20 @@ function SelectField({
 
 export default function TambahProdukPage() {
   const router = useRouter();
+
   const [form, setForm] = useState(initialForm);
   const [images, setImages] = useState([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
   const [seriesList, setSeriesList] = useState([]);
   const [loadingSeries, setLoadingSeries] = useState(false);
 
-  // Ambil daftar seri dari API ProductSeries
+  // Ambil daftar seri
   useEffect(() => {
     async function fetchSeries() {
       setLoadingSeries(true);
+
       try {
         const res = await fetch("/api/series");
         const result = await res.json();
@@ -152,7 +158,7 @@ export default function TambahProdukPage() {
     fetchSeries();
   }, []);
 
-  // Tampilkan seri sesuai brand yang dipilih
+  // Filter seri berdasarkan brand
   const filteredSeries = useMemo(
     () => seriesList.filter((series) => series.brand === form.brand),
     [seriesList, form.brand]
@@ -174,6 +180,7 @@ export default function TambahProdukPage() {
 
   function handleAccessoryChange(e) {
     const { name, value, type, checked } = e.target;
+
     setForm((prev) => ({
       ...prev,
       accessoriess: {
@@ -183,53 +190,165 @@ export default function TambahProdukPage() {
     }));
   }
 
+  // Validasi foto
   function handleImageChange(e) {
     const selected = Array.from(e.target.files || []);
-    setImages((prev) => [...prev, ...selected]);
     e.target.value = "";
+
+    setError("");
+    setNotice("");
+
+    if (selected.length === 0) return;
+
+    const allowedTypes = [
+      "image/jpeg",
+      "image/png",
+      "image/webp",
+    ];
+
+    const invalidFile = selected.find(
+      (file) => !allowedTypes.includes(file.type)
+    );
+
+    if (invalidFile) {
+      setError(
+        `Format foto "${invalidFile.name}" tidak didukung. Gunakan JPG, PNG, atau WEBP.`
+      );
+      return;
+    }
+
+    const oversizedFile = selected.find(
+      (file) => file.size > 8 * 1024 * 1024
+    );
+
+    if (oversizedFile) {
+      setError(
+        `Foto "${oversizedFile.name}" melebihi batas 8 MB per file.`
+      );
+      return;
+    }
+
+    const totalSize = [...images, ...selected].reduce(
+      (total, file) => total + file.size,
+      0
+    );
+
+    if (totalSize > 30 * 1024 * 1024) {
+  setError("Total ukuran seluruh foto maksimal 30 MB.");
+  return;
+}
+
+    setImages((prev) => [...prev, ...selected]);
+    setNotice("Foto berhasil ditambahkan.");
   }
 
   function removeImage(index) {
     setImages((prev) => prev.filter((_, i) => i !== index));
+    setError("");
+    setNotice("Foto berhasil dihapus dari pilihan.");
   }
 
+  // Upload langsung ke Cloudinary
+  async function uploadImagesToCloudinary() {
+    if (images.length === 0) return [];
+
+    const signatureRes = await fetch("/api/upload", {
+      method: "POST",
+    });
+
+    const signatureData = await signatureRes.json();
+
+    if (!signatureRes.ok || !signatureData.success) {
+      throw new Error(
+        signatureData.message || "Gagal membuat autentikasi upload."
+      );
+    }
+
+    const uploadedImages = [];
+
+    for (const file of images) {
+      const uploadData = new FormData();
+
+      uploadData.append("file", file);
+      uploadData.append("api_key", signatureData.apiKey);
+      uploadData.append("timestamp", signatureData.timestamp);
+      uploadData.append("signature", signatureData.signature);
+      uploadData.append("folder", signatureData.folder);
+
+      const uploadRes = await fetch(
+        `https://api.cloudinary.com/v1_1/${signatureData.cloudName}/image/upload`,
+        {
+          method: "POST",
+          body: uploadData,
+        }
+      );
+
+      const result = await uploadRes.json();
+
+      if (!uploadRes.ok || !result.secure_url) {
+        throw new Error(
+          result.error?.message || `Gagal mengunggah foto ${file.name}.`
+        );
+      }
+
+      uploadedImages.push(result.secure_url);
+    }
+
+    return uploadedImages;
+  }
+
+  // Simpan produk
   async function handleSubmit(e) {
     e.preventDefault();
+
     setSaving(true);
     setError("");
+    setNotice("");
 
     try {
+      const uploadedImages = await uploadImagesToCloudinary();
+
+      if (uploadedImages.length > 0) {
+        setNotice("Foto berhasil diunggah. Menyimpan produk...");
+      }
+
       const formData = new FormData();
 
       Object.entries(form).forEach(([key, value]) => {
         if (key === "accessoriess") {
           formData.append("accessoriess", JSON.stringify(value));
-        } else if (key === "manufacturerWarrantyUntil") {
-          formData.append(key, value || "");
-        } else if (key === "seriesId") {
-          formData.append(key, value || "");
         } else {
           formData.append(key, value ?? "");
         }
       });
 
-      images.forEach((file) => formData.append("images", file));
+      // Kirim URL foto, bukan file gambar
+      formData.append("images", JSON.stringify(uploadedImages));
 
       const res = await fetch("/api/katalog", {
         method: "POST",
         body: formData,
       });
+
       const result = await res.json();
 
       if (!res.ok || !result.success) {
-        throw new Error(result.message || "Gagal menambahkan produk");
+        throw new Error(
+          result.message || "Gagal menambahkan produk."
+        );
       }
 
       alert("Produk berhasil ditambahkan!");
-      router.push(result.data?.id ? `/main/${result.data.id}` : "/katalog");
+
+      router.push(
+        result.data?.id ? `/main/${result.data.id}` : "/katalog"
+      );
+
       router.refresh();
     } catch (err) {
-      setError(err.message || "Terjadi kesalahan saat menambahkan produk");
+      setError(
+        err.message || "Terjadi kesalahan saat menambahkan produk."
+      );
     } finally {
       setSaving(false);
     }
@@ -246,18 +365,60 @@ export default function TambahProdukPage() {
     >
       <Header />
 
-      <main style={{ flex: 1, width: "100%", maxWidth: "900px", margin: "0 auto", padding: "40px 20px", boxSizing: "border-box" }}>
-
-        <h1 style={{ fontSize: "30px", margin: "25px 0" }}>Tambah Produk</h1>
+      <main
+        style={{
+          flex: 1,
+          width: "100%",
+          maxWidth: "900px",
+          margin: "0 auto",
+          padding: "40px 20px",
+          boxSizing: "border-box",
+        }}
+      >
+        <h1 style={{ fontSize: "30px", margin: "25px 0" }}>
+          Tambah Produk
+        </h1>
 
         {error && (
-          <p style={{ color: "#b91c1c", marginBottom: "20px" }}>{error}</p>
+          <p
+            style={{
+              color: "#b91c1c",
+              background: "#fee2e2",
+              padding: "12px",
+              borderRadius: "8px",
+              marginBottom: "20px",
+            }}
+          >
+            {error}
+          </p>
+        )}
+
+        {notice && (
+          <p
+            style={{
+              color: "#166534",
+              background: "#dcfce7",
+              padding: "12px",
+              borderRadius: "8px",
+              marginBottom: "20px",
+            }}
+          >
+            {notice}
+          </p>
         )}
 
         <form onSubmit={handleSubmit}>
           <section style={sectionStyle}>
             <h2 style={headingStyle}>Informasi Produk</h2>
-            <InputField form={form} onChange={handleChange} label="Nama Produk" name="name" required />
+
+            <InputField
+              form={form}
+              onChange={handleChange}
+              label="Nama Produk"
+              name="name"
+              required
+            />
+
             <label style={labelStyle}>
               Brand
               <select
@@ -269,7 +430,9 @@ export default function TambahProdukPage() {
               >
                 <option value="">Pilih Brand</option>
                 {brandOptions.map((brand) => (
-                  <option key={brand} value={brand}>{brand}</option>
+                  <option key={brand} value={brand}>
+                    {brand}
+                  </option>
                 ))}
               </select>
             </label>
@@ -280,7 +443,11 @@ export default function TambahProdukPage() {
                 name="seriesId"
                 value={form.seriesId}
                 onChange={handleChange}
-                disabled={!form.brand || loadingSeries || filteredSeries.length === 0}
+                disabled={
+                  !form.brand ||
+                  loadingSeries ||
+                  filteredSeries.length === 0
+                }
                 style={inputStyle}
               >
                 <option value="">
@@ -292,6 +459,7 @@ export default function TambahProdukPage() {
                         ? "Series untuk brand ini belum tersedia"
                         : "Pilih Series"}
                 </option>
+
                 {filteredSeries.map((series) => (
                   <option key={series.id} value={series.id}>
                     {series.name}
@@ -307,73 +475,209 @@ export default function TambahProdukPage() {
                 readOnly
                 rows={5}
                 placeholder="Deskripsi akan terisi otomatis setelah series dipilih"
-                style={{ ...inputStyle, background: "#f3f3f3", resize: "vertical" }}
+                style={{
+                  ...inputStyle,
+                  background: "#f3f3f3",
+                  resize: "vertical",
+                }}
               />
             </label>
-            <InputField form={form} onChange={handleChange} label="Harga" name="price" type="number" required />
-            <InputField form={form} onChange={handleChange} label="Umur Unit" name="unitAge" />
+
+            <InputField
+              form={form}
+              onChange={handleChange}
+              label="Harga"
+              name="price"
+              type="number"
+              required
+            />
+
+            <InputField
+              form={form}
+              onChange={handleChange}
+              label="Umur Unit"
+              name="unitAge"
+            />
 
             <label style={labelStyle}>
               Foto Produk
               <input
                 type="file"
-                accept="image/*"
+                accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
                 multiple
                 onChange={handleImageChange}
                 disabled={saving}
-                style={{ ...inputStyle, border: "none", paddingLeft: 0 }}
+                style={{
+                  ...inputStyle,
+                  border: "none",
+                  paddingLeft: 0,
+                }}
               />
             </label>
 
             {images.length > 0 && (
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(125px, 1fr))", gap: "12px" }}>
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns:
+                    "repeat(auto-fill, minmax(125px, 1fr))",
+                  gap: "12px",
+                }}
+              >
                 {images.map((file, index) => (
-                  <div key={`${file.name}-${index}`} style={{ position: "relative", padding: "10px", border: "1px solid #ddd", borderRadius: "8px", background: "#fff" }}>
-                    <p style={{ fontSize: "12px", overflowWrap: "anywhere" }}>{file.name}</p>
-                    <button type="button" onClick={() => removeImage(index)} disabled={saving} style={{ marginTop: "8px", color: "#b91c1c" }}>
+                  <div
+                    key={`${file.name}-${index}`}
+                    style={{
+                      position: "relative",
+                      padding: "10px",
+                      border: "1px solid #ddd",
+                      borderRadius: "8px",
+                      background: "#fff",
+                    }}
+                  >
+                    <p
+                      style={{
+                        fontSize: "12px",
+                        overflowWrap: "anywhere",
+                      }}
+                    >
+                      {file.name}
+                    </p>
+
+                    <p style={{ fontSize: "11px", color: "#777" }}>
+                      {(file.size / (1024 * 1024)).toFixed(2)} MB
+                    </p>
+
+                    <button
+                      type="button"
+                      onClick={() => removeImage(index)}
+                      disabled={saving}
+                      style={{
+                        marginTop: "8px",
+                        color: "#b91c1c",
+                      }}
+                    >
                       Hapus
                     </button>
                   </div>
                 ))}
               </div>
             )}
-            <small style={{ color: "#777" }}>Pilih satu atau beberapa foto. Foto akan diunggah ke Cloudinary saat produk disimpan.</small>
+
+            <small style={{ color: "#777" }}>
+              Format JPG, PNG, atau WEBP. Maksimal 8 MB per foto
+              dan 30 MB untuk seluruh foto.
+            </small>
           </section>
 
           <section style={sectionStyle}>
             <h2 style={headingStyle}>Status dan Kondisi</h2>
-            <SelectField form={form} onChange={handleChange} label="Status Produk" name="status" options={[
-              { value: "AVAILABLE", label: "Tersedia" },
-              { value: "RESERVED", label: "Booking" },
-              { value: "SOLD", label: "Terjual" },
-              { value: "UNAVAILABLE", label: "Tidak Tersedia" },
-            ]} />
-            <SelectField form={form} onChange={handleChange} label="Kondisi Umum" name="condition" options={conditionOptions} />
-            <SelectField form={form} onChange={handleChange} label="Kondisi Fisik" name="physicalCondition" options={conditionOptions} />
-            <SelectField form={form} onChange={handleChange} label="Kondisi Layar" name="screenCondition" options={conditionOptions} />
-            <SelectField form={form} onChange={handleChange} label="Kondisi Baterai" name="batteryCondition" options={conditionOptions} />
-            <SelectField form={form} onChange={handleChange} label="Kondisi Strap" name="strapCondition" options={conditionOptions} />
-            <SelectField form={form} onChange={handleChange} label="Tes Baterai" name="batteryTest" options={[
-              { value: "NORMAL", label: "Normal" },
-              { value: "BAIK", label: "Baik" },
-              { value: "MENURUN", label: "Menurun" },
-              { value: "BELUM_DITES", label: "Belum Dites" },
-            ]} />
-            <SelectField form={form} onChange={handleChange} label="Tipe Garansi" name="warrantyType" options={[
-              { value: "GARANSI_RESMI", label: "Garansi Resmi" },
-              { value: "GARANSI_TOKO", label: "Garansi Toko" },
-              { value: "GARANSI_DISTRIBUTOR", label: "Garansi Distributor" },
-              { value: "TANPA_GARANSI", label: "Tidak Ada Garansi" },
-            ]} />
-            <InputField form={form} onChange={handleChange} label="Garansi Pabrik Hingga" name="manufacturerWarrantyUntil" type="date" />
+
+            <SelectField
+              form={form}
+              onChange={handleChange}
+              label="Status Produk"
+              name="status"
+              options={[
+                { value: "AVAILABLE", label: "Tersedia" },
+                { value: "RESERVED", label: "Booking" },
+                { value: "SOLD", label: "Terjual" },
+                { value: "UNAVAILABLE", label: "Tidak Tersedia" },
+              ]}
+            />
+
+            <SelectField
+              form={form}
+              onChange={handleChange}
+              label="Kondisi Umum"
+              name="condition"
+              options={conditionOptions}
+            />
+
+            <SelectField
+              form={form}
+              onChange={handleChange}
+              label="Kondisi Fisik"
+              name="physicalCondition"
+              options={conditionOptions}
+            />
+
+            <SelectField
+              form={form}
+              onChange={handleChange}
+              label="Kondisi Layar"
+              name="screenCondition"
+              options={conditionOptions}
+            />
+
+            <SelectField
+              form={form}
+              onChange={handleChange}
+              label="Kondisi Baterai"
+              name="batteryCondition"
+              options={conditionOptions}
+            />
+
+            <SelectField
+              form={form}
+              onChange={handleChange}
+              label="Kondisi Strap"
+              name="strapCondition"
+              options={conditionOptions}
+            />
+
+            <SelectField
+              form={form}
+              onChange={handleChange}
+              label="Tes Baterai"
+              name="batteryTest"
+              options={[
+                { value: "NORMAL", label: "Normal" },
+                { value: "BAIK", label: "Baik" },
+                { value: "MENURUN", label: "Menurun" },
+                { value: "BELUM_DITES", label: "Belum Dites" },
+              ]}
+            />
+
+            <SelectField
+              form={form}
+              onChange={handleChange}
+              label="Tipe Garansi"
+              name="warrantyType"
+              options={[
+                { value: "GARANSI_RESMI", label: "Garansi Resmi" },
+                { value: "GARANSI_TOKO", label: "Garansi Toko" },
+                {
+                  value: "GARANSI_DISTRIBUTOR",
+                  label: "Garansi Distributor",
+                },
+                { value: "TANPA_GARANSI", label: "Tidak Ada Garansi" },
+              ]}
+            />
+
+            <InputField
+              form={form}
+              onChange={handleChange}
+              label="Garansi Pabrik Hingga"
+              name="manufacturerWarrantyUntil"
+              type="date"
+            />
+
             <label style={labelStyle}>
               Catatan Minus / Defect
-              <textarea name="defects" value={form.defects} onChange={handleChange} rows={4} style={inputStyle} />
+              <textarea
+                name="defects"
+                value={form.defects}
+                onChange={handleChange}
+                rows={4}
+                style={inputStyle}
+              />
             </label>
           </section>
 
           <section style={sectionStyle}>
             <h2 style={headingStyle}>Kelengkapan Produk</h2>
+
             {[
               ["charger", "Charger"],
               ["box", "Box / Dus"],
@@ -381,27 +685,82 @@ export default function TambahProdukPage() {
               ["warrantyCard", "Kartu Garansi"],
               ["invoice", "Nota / Invoice"],
             ].map(([name, label]) => (
-              <label key={name} style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "14px" }}>
-                <input type="checkbox" name={name} checked={form.accessoriess[name]} onChange={handleAccessoryChange} />
+              <label
+                key={name}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "10px",
+                  marginBottom: "14px",
+                }}
+              >
+                <input
+                  type="checkbox"
+                  name={name}
+                  checked={form.accessoriess[name]}
+                  onChange={handleAccessoryChange}
+                />
                 {label}
               </label>
             ))}
+
             <label style={labelStyle}>
               Isi Paket Tambahan
-              <textarea name="packageContents" value={form.accessoriess.packageContents} onChange={handleAccessoryChange} rows={3} style={inputStyle} />
+              <textarea
+                name="packageContents"
+                value={form.accessoriess.packageContents}
+                onChange={handleAccessoryChange}
+                rows={3}
+                style={inputStyle}
+              />
             </label>
+
             <label style={labelStyle}>
               Aksesori Tambahan
-              <textarea name="additionalAccessories" value={form.accessoriess.additionalAccessories} onChange={handleAccessoryChange} rows={3} style={inputStyle} />
+              <textarea
+                name="additionalAccessories"
+                value={form.accessoriess.additionalAccessories}
+                onChange={handleAccessoryChange}
+                rows={3}
+                style={inputStyle}
+              />
             </label>
           </section>
 
-          <div style={{ display: "flex", gap: "12px", justifyContent: "flex-end", marginTop: "25px" }}>
-            <Link href="/katalog" style={{ padding: "12px 20px", borderRadius: "8px", background: "#ddd", color: "#222", textDecoration: "none" }}>
+          <div
+            style={{
+              display: "flex",
+              gap: "12px",
+              justifyContent: "flex-end",
+              marginTop: "25px",
+            }}
+          >
+            <Link
+              href="/katalog"
+              style={{
+                padding: "12px 20px",
+                borderRadius: "8px",
+                background: "#ddd",
+                color: "#222",
+                textDecoration: "none",
+              }}
+            >
               Batal
             </Link>
-            <button type="submit" disabled={saving} style={{ padding: "12px 24px", border: "none", borderRadius: "8px", background: "#263d30", color: "white", cursor: saving ? "not-allowed" : "pointer" }}>
-              {saving ? "Menyimpan..." : "Simpan Produk"}
+
+            <button
+              type="submit"
+              disabled={saving}
+              style={{
+                padding: "12px 24px",
+                border: "none",
+                borderRadius: "8px",
+                background: "#263d30",
+                color: "white",
+                cursor: saving ? "not-allowed" : "pointer",
+              }}
+            >
+              {saving ? "Mengunggah / Menyimpan..." : "Simpan Produk"}
             </button>
           </div>
         </form>

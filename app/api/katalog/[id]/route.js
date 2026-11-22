@@ -3,6 +3,89 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import cloudinary from "@/lib/cloudinary";
 
+const MAX_FILE_SIZE = 8 * 1024 * 1024;
+const MAX_TOTAL_SIZE = 30 * 1024 * 1024;
+
+// Mengambil Public ID dan memvalidasi URL Cloudinary
+function getPublicId(imageUrl) {
+  if (typeof imageUrl !== "string") {
+    throw new Error("URL foto tidak valid.");
+  }
+
+  const url = new URL(imageUrl);
+  const config = cloudinary.config();
+
+  if (
+    url.protocol !== "https:" ||
+    url.hostname !== "res.cloudinary.com"
+  ) {
+    throw new Error("URL foto bukan berasal dari Cloudinary.");
+  }
+
+  const parts = url.pathname.split("/").filter(Boolean);
+
+  if (parts[0] !== config.cloud_name || parts[1] !== "image" || parts[2] !== "upload") {
+    throw new Error("URL foto Cloudinary tidak valid.");
+  }
+
+  let publicIdParts = parts.slice(3);
+
+  // Lewati versi Cloudinary, misalnya v123456789
+  if (/^v\d+$/.test(publicIdParts[0] || "")) {
+    publicIdParts = publicIdParts.slice(1);
+  }
+
+  const publicId = publicIdParts
+    .join("/")
+    .replace(/\.[^/.]+$/, "");
+
+  // Mendukung folder lama dan folder upload baru
+  if (
+    publicId !== "donstore" &&
+    !publicId.startsWith("donstore/")
+  ) {
+    throw new Error("Foto tidak berada di folder produk.");
+  }
+
+  return publicId;
+}
+
+// Validasi ukuran seluruh foto melalui Cloudinary
+async function validateImages(images) {
+  if (!Array.isArray(images)) {
+    throw new Error("Format gambar tidak valid.");
+  }
+
+  if (new Set(images).size !== images.length) {
+    throw new Error("Terdapat foto duplikat.");
+  }
+
+  const sizes = await Promise.all(
+    images.map(async (imageUrl) => {
+      const publicId = getPublicId(imageUrl);
+
+      const resource = await cloudinary.api.resource(publicId, {
+        resource_type: "image",
+      });
+
+      if (resource.bytes > MAX_FILE_SIZE) {
+        throw new Error("Ukuran setiap foto maksimal 8 MB.");
+      }
+
+      return resource.bytes;
+    })
+  );
+
+  const totalSize = sizes.reduce(
+    (total, size) => total + size,
+    0
+  );
+
+  if (totalSize > MAX_TOTAL_SIZE) {
+    throw new Error("Total seluruh foto tidak boleh melebihi 30 MB.");
+  }
+}
+
 // GET DETAIL PRODUK
 export async function GET(request, { params }) {
   try {
@@ -75,14 +158,48 @@ export async function PUT(request, { params }) {
       accessoriess,
     } = body;
 
-    if (!Array.isArray(images)) {
+    // Validasi gambar dan ukuran
+    try {
+      await validateImages(images);
+    } catch (error) {
       return NextResponse.json(
-        { success: false, message: "Format gambar tidak valid" },
+        {
+          success: false,
+          message: error.message || "Validasi foto gagal.",
+        },
         { status: 400 }
       );
     }
 
-    // Data kelengkapan tanpa id dan productId
+    // Validasi harga
+    const parsedPrice = Number(price);
+
+    if (!Number.isFinite(parsedPrice) || parsedPrice <= 0) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Harga harus berupa angka yang valid dan lebih dari 0.",
+        },
+        { status: 400 }
+      );
+    }
+
+    // Validasi tanggal garansi
+    const warrantyDate = manufacturerWarrantyUntil
+      ? new Date(manufacturerWarrantyUntil)
+      : null;
+
+    if (warrantyDate && Number.isNaN(warrantyDate.getTime())) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Format tanggal garansi tidak valid.",
+        },
+        { status: 400 }
+      );
+    }
+
+    // Data kelengkapan produk
     const accessoryData = accessoriess
       ? {
           charger: Boolean(accessoriess.charger),
@@ -103,12 +220,9 @@ export async function PUT(request, { params }) {
         name,
         brand,
         seriesId: seriesId || null,
-        price: Number(price),
+        price: parsedPrice,
         unitAge: unitAge || null,
-        manufacturerWarrantyUntil:
-          manufacturerWarrantyUntil
-            ? new Date(manufacturerWarrantyUntil)
-            : null,
+        manufacturerWarrantyUntil: warrantyDate,
         warrantyType: warrantyType || null,
         batteryTest: batteryTest || null,
         images,
@@ -143,24 +257,13 @@ export async function PUT(request, { params }) {
     // Hapus foto lama dari Cloudinary
     for (const imageUrl of removedImages) {
       try {
-        if (!imageUrl.includes("res.cloudinary.com")) continue;
+        const publicId = getPublicId(imageUrl);
 
-        const publicId =
-          cloudinary.utils.extractPublicId(imageUrl);
-
-        if (publicId) {
-          const result = await cloudinary.uploader.destroy(
-            publicId,
-            { resource_type: "image" }
-          );
-
-          console.log("Cloudinary delete:", publicId, result.result);
-        }
+        await cloudinary.uploader.destroy(publicId, {
+          resource_type: "image",
+        });
       } catch (error) {
-        console.error(
-          "Gagal menghapus foto Cloudinary:",
-          error
-        );
+        console.error("Gagal menghapus foto Cloudinary:", error);
       }
     }
 
@@ -182,11 +285,11 @@ export async function PUT(request, { params }) {
   }
 }
 
+// DELETE PRODUK
 export async function DELETE(request, { params }) {
   try {
     const { id } = await params;
 
-    // Cari produk terlebih dahulu
     const product = await prisma.product.findUnique({
       where: { id },
     });
@@ -208,16 +311,11 @@ export async function DELETE(request, { params }) {
       await Promise.all(
         product.images.map(async (imageUrl) => {
           try {
-            if (!imageUrl.includes("res.cloudinary.com")) return;
+            const publicId = getPublicId(imageUrl);
 
-            const publicId =
-              cloudinary.utils.extractPublicId(imageUrl);
-
-            if (publicId) {
-              await cloudinary.uploader.destroy(publicId, {
-                resource_type: "image",
-              });
-            }
+            await cloudinary.uploader.destroy(publicId, {
+              resource_type: "image",
+            });
           } catch (error) {
             console.error("Gagal menghapus gambar:", error);
           }
