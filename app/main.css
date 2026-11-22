@@ -1,0 +1,238 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600&family=Space+Mono:wght@700&display=swap');
+
+/* ---------- TOKENS ---------- */
+:root {
+  --paper: #f5f2ea;
+  --paper-edge: #dcd6c6;
+  --ink: #1b221d;
+  --muted: #5d645e;
+  --orange: #ff6b1a;
+  --green: #4f6b4a;
+
+  --font-display: 'Space Grotesk', system-ui, sans-serif;
+  --font-body: 'Inter', system-ui, sans-serif;
+  --font-mono: 'Space Mono', ui-monospace, monospace;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+.wrap {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 0 clamp(20px, 4vw, 40px);
+}
+
+/* ---------- HERO ---------- */
+.hero {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-height: calc(100svh - 56px); /* sisakan ruang untuk readout */
+  padding: 72px 0;
+  overflow: hidden;
+}
+
+.contours {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* ---------- BACKGROUND DIAL JAM ---------- */
+.watch-bg {
+  position: absolute;
+  top: 50%;
+  right: -12%;
+  width: min(900px, 90vw);
+  transform: translateY(-50%);
+  opacity: 0.35;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Jarum detik berputar pelan */
+.watch-second {
+  animation: watchTick 60s linear infinite;
+}
+
+@keyframes watchTick {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.hero-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(280px, 340px);
+  gap: clamp(40px, 7vw, 96px);
+  align-items: center;
+}
+
+.headline {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: clamp(2.25rem, 6vw, 4.5rem);
+  line-height: 1.04;
+  letter-spacing: -0.03em;
+}
+
+.headline .accent {
+  color: var(--orange);
+}
+
+.lede {
+  max-width: 34ch;
+  margin: 28px 0 0;
+  color: var(--muted);
+  font-size: clamp(1rem, 1.4vw, 1.125rem);
+  line-height: 1.6;
+}
+
+/* ---------- BUTTONS ---------- */
+.brandline {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  padding: 0 20px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-align: center;
+  text-decoration: none;
+  transition: background-color 0.15s ease, color 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.btn-primary {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--paper);
+}
+
+.btn-primary:hover {
+  background: var(--orange);
+  border-color: var(--orange);
+  color: var(--ink);
+}
+
+.btn-outline {
+  background: rgba(255, 255, 255, 0.55);
+  border-color: var(--paper-edge);
+  color: var(--ink);
+}
+
+.btn-outline:hover {
+  background: #fff;
+  border-color: var(--ink);
+}
+
+.btn:focus-visible {
+  outline: 3px solid var(--orange);
+  outline-offset: 3px;
+}
+
+/* ---------- TRUST READOUT (marquee) ---------- */
+.readout {
+  overflow: hidden;
+  background: var(--ink);
+  color: var(--paper);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+}
+
+.track {
+  display: flex;
+  width: max-content;
+  padding: 18px 0;
+  animation: scroll 28s linear infinite;
+}
+
+.readout:hover .track {
+  animation-play-state: paused;
+}
+
+.item {
+  padding-right: 64px; /* pakai padding, bukan gap, supaya loop mulus */
+}
+
+.item b {
+  margin-right: 6px;
+  color: var(--orange);
+}
+
+@keyframes scroll {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/* ---------- RESPONSIVE ---------- */
+@media (max-width: 800px) {
+  .hero {
+    min-height: auto;
+    padding: 56px 0 64px;
+  }
+
+  .hero-grid {
+    grid-template-columns: 1fr;
+    gap: 40px;
+    justify-items: center; /* semua isi hero center */
+    text-align: center;
+  }
+
+  .lede {
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .brandline {
+    width: 100%;
+    max-width: 420px;
+    margin: 0 auto;
+  }
+
+  /* dial jam tepat di tengah hero, lebih samar di mobile */
+  .watch-bg {
+    left: 50%;
+    right: auto;
+    width: min(620px, 150vw);
+    transform: translate(-50%, -50%);
+    opacity: 0.22;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .track,
+  .watch-second {
+    animation: none;
+  }
+}

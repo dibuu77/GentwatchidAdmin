@@ -1,0 +1,368 @@
+/* Variabel Global & Page Context */
+:root, .page {
+  --ink: #1c231f;
+  --ink-dim: #6c7264;
+  --paper: #f5f2e9;
+  --surface: #ffffff;
+  --line: #e1dccb;
+  --orange: #ff5757;
+  --orange-deep: #d94545;
+  --moss: #4f6b4a;
+  --moss-soft: #e6ecdd;
+}
+
+.page {
+  min-height: 100vh;
+  background-color: var(--paper);
+  color: var(--ink);
+  font-family: 'Inter', sans-serif;
+  display: flex;
+  flex-direction: column;
+}
+
+.mono { font-family: 'Share Tech Mono', monospace; }
+.display { font-family: 'Space Grotesk', sans-serif; }
+
+.wrap {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 0 32px;
+  width: 100%;
+}
+
+/* ===================== HERO ===================== */
+.hero {
+  position: relative;
+  overflow: hidden;
+  padding: 64px 0 56px;
+  border-bottom: 1px solid var(--line);
+}
+.contours {
+  position: absolute; 
+  inset: 0; 
+  z-index: 0;
+  width: 100%; 
+  height: 100%;
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+/* ---------- Background dial jam ---------- */
+.watchBg {
+  position: absolute;
+  top: 50%;
+  right: -12%;
+  width: min(900px, 90vw);
+  transform: translateY(-50%);
+  opacity: 0.35;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Jarum detik berputar pelan */
+.watchSecond {
+  animation: watchTick 60s linear infinite;
+}
+@keyframes watchTick {
+  to { transform: rotate(360deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .watchSecond { animation: none; }
+}
+
+.hero-grid {
+  position: relative; 
+  z-index: 1;
+  max-width: 620px;
+}
+
+.kicker {
+  display: inline-flex; 
+  align-items: center; 
+  gap: 8px;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 11.5px; 
+  letter-spacing: 1.2px;
+  color: var(--moss);
+  background: var(--moss-soft);
+  border: 1px dashed var(--moss);
+  padding: 6px 12px; 
+  border-radius: 20px;
+  margin-bottom: 22px;
+}
+
+h1.headline {
+  font-size: clamp(32px, 7vw, 52px);
+  line-height: 1.05;
+  letter-spacing: -0.5px;
+  margin-bottom: 20px;
+}
+h1.headline .accent { color: var(--orange); }
+
+.hero p.lede {
+  font-size: 15.5px; 
+  color: var(--ink-dim); 
+  max-width: 420px; 
+  line-height: 1.6; 
+  margin-bottom: 28px;
+}
+
+.patch-cta {
+  display: inline-flex; 
+  align-items: center; 
+  gap: 10px;
+  background: var(--ink); 
+  color: #f5f2e9;
+  padding: 15px 26px;
+  border-radius: 3px;
+  font-family: 'Space Grotesk', sans-serif; 
+  font-weight: 600; 
+  font-size: 14.5px;
+  border: 1.5px dashed rgba(245,242,233,0.4);
+  outline: 1px solid var(--ink);
+  outline-offset: 4px;
+}
+
+/* ===================== TRUST READOUT ===================== */
+.readout {
+  background: var(--ink); 
+  color: var(--paper);
+  padding: 16px 0;
+  overflow: hidden;
+}
+.readout .track {
+  display: flex; 
+  gap: 60px; 
+  width: max-content;
+  animation: marquee-right 16s linear infinite;
+}
+@keyframes marquee-right {
+  from { transform: translateX(-50%); }
+  to { transform: translateX(0); }
+}
+.readout .item { 
+  font-family: 'Share Tech Mono', monospace; 
+  font-size: 12.5px; 
+  letter-spacing: 0.5px; 
+  white-space: nowrap; 
+}
+.readout .item b { color: var(--orange); }
+
+/* ===================== PRODUCTS ===================== */
+.products { 
+  padding: 58px 0 80px; 
+  flex-grow: 1;
+}
+.prod-head { 
+  display: flex; 
+  align-items: flex-end; 
+  justify-content: space-between; 
+  margin-bottom: 30px; 
+}
+.sec-title { 
+  font-family: 'Space Grotesk', sans-serif; 
+  font-weight: 700; 
+  font-size: 24px; 
+  margin-bottom: 6px; 
+}
+.sec-sub { 
+  color: var(--ink-dim); 
+  font-size: 14px; 
+}
+
+.filter-tabs { display: flex; gap: 8px; }
+.filter-tabs span {
+  font-family: 'Share Tech Mono', monospace; 
+  font-size: 11.5px;
+  padding: 7px 13px; 
+  border-radius: 20px; 
+  border: 1px solid var(--line);
+  color: var(--ink-dim);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.filter-tabs span.on { 
+  background: var(--ink); 
+  color: var(--paper); 
+  border-color: var(--ink); 
+}
+
+/* DESKTOP GRID PRODUK */
+.grid-produk {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 22px;
+  margin-top: 24px;
+}
+
+.status-msg {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 40px 0;
+  color: var(--ink-dim);
+  font-size: 14px;
+}
+.error-msg {
+  color: var(--orange);
+}
+
+/* CARD SYSTEM */
+.card-link {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+}
+
+.card {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.06);
+}
+
+.card .thumb {
+  width: 100%;
+  height: 180px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  background-color: #f2ede2;
+  overflow: hidden;
+}
+
+.card .thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.card .body {
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+}
+
+.card .brand {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.8px;
+  color: var(--ink-dim);
+  margin-bottom: 4px;
+  display: block;
+  text-transform: uppercase;
+}
+
+.card .name {
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 600;
+  font-size: 14.5px;
+  line-height: 1.3;
+  margin-bottom: 12px;
+  min-height: 38px;
+}
+
+.price-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: auto;
+}
+
+.price-row .price {
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700;
+  font-size: 15px;
+}
+
+.add-btn {
+  width: 34px; 
+  height: 34px; 
+  border-radius: 9px;
+  background: var(--ink); 
+  color: var(--paper);
+  display: flex; 
+  align-items: center; 
+  justify-content: center;
+  flex-shrink: 0;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  transition: opacity 0.2s ease;
+}
+
+.add-btn:hover {
+  opacity: 0.85;
+}
+
+/* ===================== RESPONSIVE / TABLET & MOBILE ===================== */
+@media (max-width: 860px) {
+  .hero { padding: 40px 0 36px; }
+  .patch-cta { width: 100%; justify-content: center; }
+}
+
+@media (max-width: 640px) {
+  .wrap { padding: 0 16px; }
+
+  /* dial jam lebih kecil & samar di mobile */
+  .watchBg {
+    right: -35%;
+    opacity: 0.25;
+  }
+
+  .grid-produk {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 12px !important;
+  }
+
+  .card .thumb {
+    height: 125px !important;
+  }
+
+  .card .body {
+    padding: 10px 12px !important;
+  }
+
+  .card .name {
+    font-size: 12.5px !important;
+    min-height: auto !important;
+    margin-bottom: 8px !important;
+  }
+
+  .card .brand {
+    font-size: 9px !important;
+  }
+
+  .price-row .price {
+    font-size: 13px !important;
+  }
+
+  .add-btn {
+    width: 28px !important;
+    height: 28px !important;
+    font-size: 12px !important;
+  }
+
+  .prod-head {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 12px !important;
+  }
+
+  .filter-tabs {
+    width: 100%;
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+}

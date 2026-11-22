@@ -1,0 +1,197 @@
+/* ===================== HEADER ===================== */
+header { 
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2); 
+  background: #0d0d0c; 
+  color: #ffffff;
+}
+
+header .headbar { 
+  display: flex; 
+  align-items: center; 
+  gap: 20px; 
+  padding: 24px 0; 
+}
+
+header .logo { 
+  display: flex; 
+  align-items: center; 
+  flex: 0 0 auto; 
+}
+
+header .logo .logo-desktop {
+  display: block;
+  width: 150px;
+  height: 64px;
+  object-fit: contain;
+}
+
+header .logo .logo-mobile {
+  display: none;
+}
+
+/* ===================== SEARCH BAR ===================== */
+header .search {
+  display: flex;
+  align-items: center;
+  flex: 1 1 auto;
+  justify-content: center;
+}
+
+header .search-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  max-width: 360px;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 999px;
+  padding: 8px 16px;
+  color: #ffffff;
+  transition: border-color 0.2s ease;
+}
+
+header .search-input-wrap:focus-within {
+  border-color: rgba(255, 255, 255, 0.8);
+}
+
+header .search-input-wrap input {
+  border: none;
+  outline: none;
+  background: transparent;
+  font: inherit;
+  color: #ffffff;
+  width: 100%;
+}
+
+header .search-input-wrap input::placeholder {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+header input:-webkit-autofill,
+header input:-webkit-autofill:hover, 
+header input:-webkit-autofill:focus, 
+header input:-webkit-autofill:active {
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: #ffffff;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+/* ===================== NAVIGASI DESKTOP ===================== */
+header .desktop-nav { 
+  display: flex; 
+  align-items: center; 
+  gap: 22px; 
+  flex: 0 0 auto; 
+  color: rgba(255, 255, 255, 0.9);
+}
+
+header .desktop-nav a {
+  text-decoration: none;
+  color: inherit;
+  font-size: 15px;
+  font-weight: 400;
+  transition: opacity 0.2s;
+}
+
+header .desktop-nav a.active {
+  font-weight: 700;
+  color: #ffffff;
+}
+
+header .desktop-nav a:hover {
+  opacity: 0.8;
+}
+
+header .menu-btn {
+  display: none;
+  cursor: pointer;
+}
+
+/* ===================== MOBILE SIDEBAR & OVERLAY ===================== */
+.mobile-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 99;
+}
+
+.mobile-sidebar {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 260px;
+  height: 100%;
+  background-color: #ffffff;
+  color: #1c231f;
+  box-shadow: -2px 0 10px rgba(0,0,0,0.1);
+  z-index: 100;
+  padding: 24px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  transform: translateX(100%);
+  transition: transform 0.3s ease-in-out;
+}
+
+.mobile-sidebar.open {
+  transform: translateX(0);
+}
+
+.sidebar-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  font-weight: bold;
+  font-size: 18px;
+}
+
+.sidebar-head button {
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 18px;
+}
+
+.mobile-sidebar a {
+  font-size: 16px;
+  text-decoration: none;
+  color: inherit;
+}
+
+.mobile-sidebar hr {
+  border: none;
+  border-top: 1px solid #eee;
+  margin: 10px 0;
+}
+
+.sidebar-account {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+/* ===================== RESPONSIVE BREAKPOINTS ===================== */
+@media (max-width: 768px) {
+  header .desktop-nav {
+    display: none;
+  }
+  
+  header .menu-btn {
+    display: block;
+  }
+
+  header .logo .logo-desktop {
+    display: none;
+  }
+
+  header .logo .logo-mobile {
+    display: block;
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
+  }
+}

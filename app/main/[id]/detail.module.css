@@ -1,0 +1,330 @@
+/* Scope Page Wrapper & Flexbox Layout */
+.page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--paper, #f5f2e9);
+  color: var(--ink, #1c231f);
+}
+
+/* CONTAINER LOADING & ERROR (Mengisi sisa ruang kosong agar Footer terdorong ke bawah) */
+.status-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 20px;
+  text-align: center;
+}
+
+.status-text {
+  font-size: 15px;
+  color: var(--ink-dim, #6c7264);
+}
+
+.error-text {
+  color: var(--orange, #d9622b);
+  font-size: 16px;
+  margin-bottom: 12px;
+}
+
+/* MAIN CONTAINER (Mengisi sisa ruang flex saat data produk sudah tampil) */
+.detail-container {
+  flex: 1;
+  max-width: 1080px;
+  margin: 2rem auto;
+  padding: 0 1.5rem;
+  width: 100%;
+  box-sizing: border-box;
+  font-family: inherit;
+}
+
+.back-link {
+  display: inline-block;
+  color: var(--ink-dim, #666666);
+  text-decoration: none;
+  font-size: 0.9rem;
+  margin-bottom: 1.5rem;
+  transition: color 0.2s ease;
+}
+
+.back-link:hover {
+  color: var(--orange, #d9622b);
+}
+
+/* SECTION ATAS (HERO) */
+.top-hero-section {
+  display: grid;
+  grid-template-columns: 380px 1fr;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+/* GALLERY & IMAGE SLIDER */
+.image-column {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.image-container {
+  aspect-ratio: 1 / 1;
+  width: 100%;
+  background-color: #f3f4f6;
+  border-radius: 12px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--line, #e5e7eb);
+  position: relative;
+}
+
+.main-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.no-image-text {
+  color: #9ca3af;
+  font-size: 0.9rem;
+}
+
+/* Navigasi Panah Gambar */
+.nav-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background-color: rgba(0, 0, 0, 0.4);
+  color: #ffffff;
+  border: none;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s ease;
+  backdrop-filter: blur(2px);
+  z-index: 2;
+}
+
+.nav-btn:hover {
+  background-color: rgba(0, 0, 0, 0.7);
+}
+
+.nav-prev {
+  left: 10px;
+}
+
+.nav-next {
+  right: 10px;
+}
+
+/* Thumbnail List */
+.thumbnail-list {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 12px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.thumb-btn {
+  border: 1px solid var(--line, #e0e0e0);
+  border-radius: 8px;
+  padding: 0;
+  overflow: hidden;
+  cursor: pointer;
+  flex: 0 0 64px;
+  width: 64px;
+  height: 64px;
+  background-color: #ffffff;
+  transition: border-color 0.2s ease;
+}
+
+.thumb-selected {
+  border: 2px solid var(--orange, #d9622b) !important;
+}
+
+.thumb-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* INFO UTAMA */
+.main-info-column {
+  background: #ffffff;
+  padding: 1.8rem;
+  border-radius: 12px;
+  border: 1px solid var(--line, #e5e7eb);
+}
+
+.header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.brand-text {
+  font-weight: 700;
+  color: var(--orange, #d9622b);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+}
+
+.status-badge {
+  padding: 0.25rem 0.6rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.product-title {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: #111827;
+  margin: 0.2rem 0 0.5rem 0;
+  line-height: 1.25;
+}
+
+.product-price {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #111827;
+  margin: 0;
+}
+
+.divider {
+  border: none;
+  border-top: 1px solid var(--line, #e5e7eb);
+  margin: 1.2rem 0;
+}
+
+/* DESKRIPSI BOX */
+.section-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #111827;
+  margin-top: 0;
+  margin-bottom: 0.6rem;
+}
+
+.description-text {
+  font-size: 0.925rem;
+  line-height: 1.65;
+  color: #374151;
+  text-align: justify;
+  margin: 0;
+}
+
+/* SECTION BAWAH (SPESIFIKASI) */
+.bottom-spec-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.card-box {
+  background: #ffffff;
+  padding: 1.8rem;
+  border-radius: 12px;
+  border: 1px solid var(--line, #e5e7eb);
+}
+
+.spec-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 1.2rem;
+  margin-top: 1rem;
+}
+
+.spec-grid div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.spec-label {
+  font-size: 0.75rem;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+.spec-grid b {
+  font-size: 0.9rem;
+  color: #111827;
+}
+
+.defects-box {
+  background-color: #fff5f5;
+  border: 1px solid #fed7d7;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-top: 1.2rem;
+}
+
+.defects-title {
+  color: #c53030;
+  font-size: 0.875rem;
+}
+
+.defects-text {
+  margin: 0.4rem 0 0 0;
+  font-size: 0.875rem;
+  color: #9b2c2c;
+}
+
+.bottom-grid-two {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+.acc-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 0.8rem;
+  font-size: 0.9rem;
+  margin-top: 0.8rem;
+}
+
+.acc-detail {
+  margin-top: 0.8rem;
+  font-size: 0.875rem;
+  color: #374151;
+}
+
+.info-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  font-size: 0.875rem;
+  margin-top: 0.8rem;
+}
+
+.id-text {
+  font-family: monospace;
+  font-size: 0.8rem;  
+  color: #4b5563;
+}
+
+/* RESPONSIVE DESIGN (TABLET & MOBILE) */
+@media (max-width: 868px) {
+  .top-hero-section {
+    grid-template-columns: 1fr;
+  }
+
+  .bottom-grid-two {
+    grid-template-columns: 1fr;
+  }
+}

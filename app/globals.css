@@ -1,0 +1,247 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600&family=Space+Mono:wght@700&display=swap');
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+
+  /* Donstore */
+  --paper: #f5f2ea;
+  --paper-edge: #dccd66;
+  --ink: #1b221d;
+  --muted: #5d645e;
+  --orange: #ff6b1a;
+  --green: #4f6b4a;
+  --font-display: 'Space Grotesk', system-ui, sans-serif;
+  --font-body: 'Inter', system-ui, sans-serif;
+  --font-readout: 'Space Mono', ui-monospace, monospace;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Container umum (dipakai header / page lain yang pakai className="wrap") */
+.wrap {
+  width: 100%;
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 0 clamp(20px, 4vw, 40px);
+}
+
+/* ==========================================================
+   RESET INPUT & AUTOFILL BROWSER (Mencegah Box Putih First Load)
+   ========================================================== */
+input {
+  background-color: transparent !important;
+}
+
+input:-webkit-autofill,
+input:-webkit-autofill:hover, 
+input:-webkit-autofill:focus, 
+input:-webkit-autofill:active {
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: inherit !important;
+  transition: background-color 9999s ease-in-out 0s !important;
+  box-shadow: 0 0 0px 1000px transparent inset !important;
+}
+
+/* ==========================================================
+   HEADER GLOBAL (Berlaku Sama di Semua Halaman)
+   ========================================================== */
+header { 
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2); 
+  background: #0d0d0c; 
+  color: #ffffff;
+}
+
+header .headbar { 
+  display: flex; 
+  align-items: center; 
+  gap: 20px; 
+  padding: 24px 0; 
+}
+
+header .logo { 
+  display: flex; 
+  align-items: center; 
+  flex: 0 0 auto; 
+}
+
+header .logo .logo-desktop {
+  display: block;
+  width: 150px;
+  height: 64px;
+  object-fit: contain;
+}
+
+header .logo .logo-mobile {
+  display: none;
+}
+
+/* Search Bar Header */
+header .search {
+  display: flex;
+  align-items: center;
+  flex: 1 1 auto;
+  justify-content: center;
+}
+
+header .search-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  max-width: 360px;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 999px;
+  padding: 8px 16px;
+  color: #ffffff;
+  transition: border-color 0.2s ease;
+}
+
+header .search-input-wrap:focus-within {
+  border-color: rgba(255, 255, 255, 0.8);
+}
+
+header .search-input-wrap input {
+  border: none;
+  outline: none;
+  background: transparent !important;
+  font: inherit;
+  color: #ffffff !important;
+  width: 100%;
+}
+
+header .search-input-wrap input::placeholder {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* Navigasi Header Desktop */
+header .desktop-nav { 
+  display: flex; 
+  align-items: center; 
+  gap: 22px; 
+  flex: 0 0 auto; 
+  color: rgba(255, 255, 255, 0.9);
+}
+
+header .desktop-nav a {
+  text-decoration: none;
+  color: inherit;
+  font-size: 15px;
+  font-weight: 400;
+  transition: opacity 0.2s;
+}
+
+header .desktop-nav a.active {
+  font-weight: 700;
+  color: #ffffff;
+}
+
+header .desktop-nav a:hover {
+  opacity: 0.8;
+}
+
+header .menu-btn {
+  display: none;
+  cursor: pointer;
+}
+
+/* Mobile Sidebar & Overlay */
+.mobile-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 99;
+}
+
+.mobile-sidebar {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 260px;
+  height: 100%;
+  background-color: #ffffff;
+  color: #1c231f;
+  box-shadow: -2px 0 10px rgba(0,0,0,0.1);
+  z-index: 100;
+  padding: 24px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  transform: translateX(100%);
+  transition: transform 0.3s ease-in-out;
+}
+
+.mobile-sidebar.open {
+  transform: translateX(0);
+}
+
+.sidebar-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  font-weight: bold;
+  font-size: 18px;
+}
+
+.sidebar-head button {
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 18px;
+}
+
+.mobile-sidebar a {
+  font-size: 16px;
+  text-decoration: none;
+  color: inherit;
+}
+
+.mobile-sidebar hr {
+  border: none;
+  border-top: 1px solid #eee;
+  margin: 10px 0;
+}
+
+.sidebar-account {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+/* Responsive Header Mobile */
+@media (max-width: 768px) {
+  header .desktop-nav {
+    display: none;
+  }
+  
+  header .menu-btn {
+    display: block;
+  }
+ 
+  header .logo .logo-desktop {
+    display: none;
+  }
+
+  header .logo .logo-mobile {
+    display: block;
+    width: 80px;
+    height: 80px;
+    object-fit: contain;
+  }
+}

@@ -1,0 +1,82 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum ProductBrand {
+  GARMIN
+  AMAZFIT
+  COROS
+  SUUNTO
+  POLAR
+  OTHER
+}
+
+enum ProductStatus {
+  AVAILABLE
+  SOLD
+  RESERVED
+  UNAVAILABLE
+}
+
+enum ItemCondition {
+  BARU
+  BEKAS_SEPERTI_BARU
+  BEKAS_BAIK
+  MINUS
+}
+
+// Model Master Seri (Penyimpan Deskripsi Utama)
+model ProductSeries {
+  id          String       @id @default(uuid())
+  brand       ProductBrand
+  name        String // Contoh: "Forerunner 265"
+  defaultDesc String // Deskripsi panjang resmi bawaan pabrik
+  products    Product[]
+
+  @@unique([brand, name])
+}
+
+// Model Produk Fisik (Tanpa field description)
+model Product {
+  id    String       @id @default(uuid())
+  name  String
+  brand ProductBrand
+
+  // Relasi Wajib/Opsional ke ProductSeries
+  seriesId String?
+  series   ProductSeries? @relation(fields: [seriesId], references: [id])
+
+  price                     Int
+  createdAt                 DateTime       @default(now())
+  updatedAt                 DateTime       @updatedAt
+  unitAge                   String?
+  manufacturerWarrantyUntil DateTime?
+  warrantyType              String?
+  batteryTest               String?
+  images                    String[]
+  defects                   String? // Catatan minus khusus unit ini
+  status                    ProductStatus  @default(AVAILABLE)
+  condition                 ItemCondition?
+  physicalCondition         ItemCondition?
+  screenCondition           ItemCondition?
+  batteryCondition          ItemCondition?
+  strapCondition            ItemCondition?
+  accessoriess              Accessoriess?
+}
+
+model Accessoriess {
+  id                    String  @id @default(uuid())
+  productId             String  @unique
+  additionalAccessories String?
+  packageContents       String?
+  charger               Boolean @default(false)
+  box                   Boolean @default(false)
+  manual                Boolean @default(false)
+  warrantyCard          Boolean @default(false)
+  invoice               Boolean @default(false)
+  product               Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+}
