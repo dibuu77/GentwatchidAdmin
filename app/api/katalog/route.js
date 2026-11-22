@@ -1,203 +1,268 @@
-import { NextResponse } from 'next/server';
-import * as v from "valibot";
-import {prisma} from "@/lib/prisma";
-import { createProductSchema } from "@/lib/product";
-import cloudinary from '@/lib/cloudinary';
+
+import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+import cloudinary from "@/lib/cloudinary";
 
 export async function GET(request) {
   try {
-    const haha = await prisma.product.findMany();
-    return NextResponse.json({ success: true, message: 'GET Success', data : haha});
+    const products = await prisma.product.findMany();
+
+    return NextResponse.json({
+      success: true,
+      message: "GET Success",
+      data: products,
+    });
   } catch (error) {
-    return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+    console.error("GET ERROR:", error);
+
+    return NextResponse.json(
+      { success: false, message: error.message },
+      { status: 500 }
+    );
   }
 }
 
 export async function POST(request) {
   try {
+    // 1. Ambil FormData
     const formData = await request.formData();
 
-    // 1. Ambil Field Produk Utama
-    const name = formData.get('name');
-    const brand = formData.get('brand');
-    const seriesId = formData.get('seriesId') || null;
-    const priceRaw = formData.get('price');
-    const unitAge = formData.get('unitAge') || null;
-    const warrantyType = formData.get('warrantyType') || null;
-    const manufacturerWarrantyUntilRaw = formData.get('manufacturerWarrantyUntil');
-    const batteryTest = formData.get('batteryTest') || null;
-    const defects = formData.get('defects') || null;
-    const status = formData.get('status') || 'AVAILABLE';
+    console.log("1. FormData berhasil dibaca");
 
-    // Enum Kondisi
-    const condition = formData.get('condition') || null;
-    const physicalCondition = formData.get('physicalCondition') || null;
-    const screenCondition = formData.get('screenCondition') || null;
-    const batteryCondition = formData.get('batteryCondition') || null;
-    const strapCondition = formData.get('strapCondition') || null;
+    // 2. Ambil data produk
+    const name = formData.get("name");
+    const brand = formData.get("brand");
+    const seriesId = formData.get("seriesId") || null;
+    const priceRaw = formData.get("price");
+    const unitAge = formData.get("unitAge") || null;
+    const warrantyType = formData.get("warrantyType") || null;
+    const manufacturerWarrantyUntilRaw = formData.get(
+      "manufacturerWarrantyUntil"
+    );
+    const batteryTest = formData.get("batteryTest") || null;
+    const defects = formData.get("defects") || null;
+    const status = formData.get("status") || "AVAILABLE";
 
-    // 2. Ambil Data Aksesori
-    const accessoriessRaw = formData.get('accessoriess');
+    const condition = formData.get("condition") || null;
+    const physicalCondition = formData.get("physicalCondition") || null;
+    const screenCondition = formData.get("screenCondition") || null;
+    const batteryCondition = formData.get("batteryCondition") || null;
+    const strapCondition = formData.get("strapCondition") || null;
+
+    console.log("2. Data produk:", {
+      name,
+      brand,
+      seriesId,
+      priceRaw,
+    });
+
+    // 3. Ambil data aksesori
+    const accessoriessRaw = formData.get("accessoriess");
     let accessoriessData = null;
+
     if (accessoriessRaw) {
       accessoriessData = JSON.parse(accessoriessRaw);
     }
 
-    // 3. Ambil Semua File Gambar (Multiple Upload)
-    const imageFiles = formData.getAll('images');
+    // 4. Ambil gambar
+    const imageFiles = formData.getAll("images");
 
-    // Validasi Field Wajib
+    // 5. Validasi field wajib
     if (!name || !brand || !priceRaw) {
       return NextResponse.json(
-        { success: false, message: "Nama, Brand, dan Harga wajib diisi!" },
+        {
+          success: false,
+          message: "Nama, Brand, dan Harga wajib diisi!",
+        },
         { status: 400 }
       );
     }
 
     const price = parseInt(priceRaw, 10);
-    const manufacturerWarrantyUntil = manufacturerWarrantyUntilRaw 
-      ? new Date(manufacturerWarrantyUntilRaw) 
+
+    if (!Number.isFinite(price) || price <= 0) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Harga harus berupa angka yang valid dan lebih dari 0.",
+        },
+        { status: 400 }
+      );
+    }
+
+    // 6. Konversi tanggal garansi
+    const manufacturerWarrantyUntil = manufacturerWarrantyUntilRaw
+      ? new Date(manufacturerWarrantyUntilRaw)
       : null;
 
-    // 4. Upload Banyak Gambar ke Cloudinary secara Paralel
+    if (
+      manufacturerWarrantyUntil &&
+      Number.isNaN(manufacturerWarrantyUntil.getTime())
+    ) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Format tanggal garansi tidak valid.",
+        },
+        { status: 400 }
+      );
+    }
+
+    console.log("3. Tanggal garansi:", manufacturerWarrantyUntil);
+
+    // 7. Upload gambar ke Cloudinary
+    console.log("4. Mulai upload gambar");
+
     const imageUrls = [];
-    if (imageFiles && imageFiles.length > 0) {
+
+    if (imageFiles.length > 0) {
       const uploadPromises = imageFiles.map(async (file) => {
-        if (file && file.size > 0 && typeof file !== 'string') {
-          const arrayBuffer = await file.arrayBuffer();
-          const buffer = Buffer.from(arrayBuffer);
+        if (file && file.size > 0 && typeof file !== "string") {
+          const buffer = Buffer.from(await file.arrayBuffer());
 
           return new Promise((resolve, reject) => {
-            const uploadStream = cloudinary.uploader.upload_stream(
-              { folder: 'donstore' },
+            cloudinary.uploader.upload_stream(
+              {
+                folder: "donstore",
+                resource_type: "image",
+              },
               (error, result) => {
-                if (error) return reject(error);
-                resolve(result.secure_url);
+                if (error) {
+                  reject(error);
+                } else {
+                  resolve(result.secure_url);
+                }
               }
-            );
-            uploadStream.end(buffer);
+            ).end(buffer);
           });
         }
+
         return null;
       });
 
       const results = await Promise.all(uploadPromises);
-      imageUrls.push(...results.filter(Boolean)); // Saring jika ada yang null
+      imageUrls.push(...results.filter(Boolean));
     }
 
-    // 5. Simpan ke Database via Prisma
+    console.log("5. Upload gambar berhasil:", imageUrls.length);
+
+    // 8. Simpan produk ke database
+    console.log("6. Mulai menyimpan ke database");
+
     const newProduct = await prisma.product.create({
-    data: {
-    name,
-    brand: brand.toUpperCase(),
-    
-    // Hubungkan ke ProductSeries menggunakan 'connect'
-    series: seriesId ? { connect: { id: seriesId } } : undefined,
+      data: {
+        name,
+        brand: brand.toUpperCase(),
 
-    price,
-    unitAge,
-    warrantyType,
-    manufacturerWarrantyUntil,
-    batteryTest,
-    defects,
-    status,
-    condition: condition || undefined,
-    physicalCondition: physicalCondition || undefined,
-    screenCondition: screenCondition || undefined,
-    batteryCondition: batteryCondition || undefined,
-    strapCondition: strapCondition || undefined,
+        series: seriesId
+          ? { connect: { id: seriesId } }
+          : undefined,
 
-    images: imageUrls, // Array URL dari Cloudinary
+        price,
+        unitAge,
+        warrantyType,
+        manufacturerWarrantyUntil,
+        batteryTest,
+        defects,
+        status,
 
-    accessoriess: accessoriessData ? {
-      create: {
-        charger: accessoriessData.charger || false,
-        box: accessoriessData.box || false,
-        manual: accessoriessData.manual || false,
-        warrantyCard: accessoriessData.warrantyCard || false,
-        invoice: accessoriessData.invoice || false,
-        packageContents: accessoriessData.packageContents || null,
-        additionalAccessories: accessoriessData.additionalAccessories || null,
-      }
-    } : undefined,
-  },
-  include: {
-    series: true,
-    accessoriess: true,
-  }
-});
+        condition: condition || undefined,
+        physicalCondition: physicalCondition || undefined,
+        screenCondition: screenCondition || undefined,
+        batteryCondition: batteryCondition || undefined,
+        strapCondition: strapCondition || undefined,
 
-    return NextResponse.json({
-      success: true,
-      message: "Produk berhasil ditambahkan!",
-      data: newProduct,
-    }, { status: 201 });
+        images: imageUrls,
 
+        accessoriess: accessoriessData
+          ? {
+              create: {
+                charger: accessoriessData.charger || false,
+                box: accessoriessData.box || false,
+                manual: accessoriessData.manual || false,
+                warrantyCard: accessoriessData.warrantyCard || false,
+                invoice: accessoriessData.invoice || false,
+                packageContents:
+                  accessoriessData.packageContents || null,
+                additionalAccessories:
+                  accessoriessData.additionalAccessories || null,
+              },
+            }
+          : undefined,
+      },
+      include: {
+        series: true,
+        accessoriess: true,
+      },
+    });
+
+    console.log("7. Produk berhasil disimpan");
+
+    return NextResponse.json(
+      {
+        success: true,
+        message: "Produk berhasil ditambahkan!",
+        data: newProduct,
+      },
+      { status: 201 }
+    );
   } catch (error) {
     console.error("DETAILED SERVER ERROR:", error);
 
     return NextResponse.json(
-      { 
-        success: false, 
-        message: error.message || "Gagal memproses data di server." 
+      {
+        success: false,
+        message: error.message || "Gagal memproses data di server.",
       },
       { status: 500 }
     );
   }
 }
 
-console.log("1. FormData berhasil dibaca");
-
-const name = formData.get("name");
-const brand = formData.get("brand");
-const seriesId = formData.get("seriesId") || null;
-
-console.log("2. Data produk:", {
-  name,
-  brand,
-  seriesId,
-});
-
-const manufacturerWarrantyUntil = manufacturerWarrantyUntilRaw
-  ? new Date(manufacturerWarrantyUntilRaw)
-  : null;
-
-console.log("3. Tanggal garansi:", manufacturerWarrantyUntil);
-
-// Sebelum proses upload Cloudinary
-console.log("4. Mulai upload gambar");
-
-// Setelah seluruh upload selesai
-console.log("5. Upload gambar berhasil");
-
-// Sebelum prisma.product.create
-console.log("6. Mulai menyimpan ke database");
-
-// Setelah prisma.product.create berhasil
-console.log("7. Produk berhasil disimpan");
-
-
 export async function PUT(request) {
   try {
     const body = await request.json();
-    return NextResponse.json({ success: true, data: body });
+
+    return NextResponse.json({
+      success: true,
+      data: body,
+    });
   } catch (error) {
-    return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+    return NextResponse.json(
+      { success: false, message: error.message },
+      { status: 500 }
+    );
   }
 }
+
 export async function PATCH(request) {
   try {
     const body = await request.json();
-    return NextResponse.json({ success: true, data: body });
+
+    return NextResponse.json({
+      success: true,
+      data: body,
+    });
   } catch (error) {
-    return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+    return NextResponse.json(
+      { success: false, message: error.message },
+      { status: 500 }
+    );
   }
 }
+
 export async function DELETE(request) {
   try {
     const body = await request.json();
-    return NextResponse.json({ success: true, data: body });
+
+    return NextResponse.json({
+      success: true,
+      data: body,
+    });
   } catch (error) {
-    return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+    return NextResponse.json(
+      { success: false, message: error.message },
+      { status: 500 }
+    );
   }
 }
