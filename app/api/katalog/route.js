@@ -146,6 +146,36 @@ export async function POST(request) {
   }
 }
 
+console.log("1. FormData berhasil dibaca");
+
+const name = formData.get("name");
+const brand = formData.get("brand");
+const seriesId = formData.get("seriesId") || null;
+
+console.log("2. Data produk:", {
+  name,
+  brand,
+  seriesId,
+});
+
+const manufacturerWarrantyUntil = manufacturerWarrantyUntilRaw
+  ? new Date(manufacturerWarrantyUntilRaw)
+  : null;
+
+console.log("3. Tanggal garansi:", manufacturerWarrantyUntil);
+
+// Sebelum proses upload Cloudinary
+console.log("4. Mulai upload gambar");
+
+// Setelah seluruh upload selesai
+console.log("5. Upload gambar berhasil");
+
+// Sebelum prisma.product.create
+console.log("6. Mulai menyimpan ke database");
+
+// Setelah prisma.product.create berhasil
+console.log("7. Produk berhasil disimpan");
+
 
 export async function PUT(request) {
   try {
