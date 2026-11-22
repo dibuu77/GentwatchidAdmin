@@ -42,6 +42,56 @@ const conditionOptions = [
   { value: "MINUS", label: "Ada Minus" },
 ];
 
+const inputStyle = {
+  width: "100%",
+  padding: "11px",
+  border: "1px solid #ddd",
+  borderRadius: "8px",
+  marginTop: "6px",
+  color: "#222",
+  background: "#fff",
+};
+
+function InputField({ label, name, type = "text", form, onChange }) {
+  return (
+    <label style={{ display: "block", marginBottom: "16px" }}>
+      {label}
+      <input
+        type={type}
+        name={name}
+        value={form[name] ?? ""}
+        onChange={onChange}
+        style={inputStyle}
+      />
+    </label>
+  );
+}
+
+function SelectField({ label, name, options, form, onChange }) {
+  return (
+    <label style={{ display: "block", marginBottom: "16px" }}>
+      {label}
+      <select
+        name={name}
+        value={form[name] ?? ""}
+        onChange={onChange}
+        style={inputStyle}
+      >
+        <option value="">Pilih {label}</option>
+        {form[name] &&
+          !options.some((option) => option.value === form[name]) && (
+            <option value={form[name]}>{form[name]}</option>
+          )}
+        {options.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
 export default function EditProdukPage() {
   const { id } = useParams();
   const router = useRouter();
@@ -190,55 +240,7 @@ export default function EditProdukPage() {
     }
   }
 
-  const inputStyle = {
-    width: "100%",
-    padding: "11px",
-    border: "1px solid #ddd",
-    borderRadius: "8px",
-    marginTop: "6px",
-    color: "#222",
-    background: "#fff",
-  };
 
-  function InputField({ label, name, type = "text" }) {
-    return (
-      <label style={{ display: "block", marginBottom: "16px" }}>
-        {label}
-        <input
-          type={type}
-          name={name}
-          value={form[name] ?? ""}
-          onChange={handleChange}
-          style={inputStyle}
-        />
-      </label>
-    );
-  }
-
-  function SelectField({ label, name, options }) {
-    return (
-      <label style={{ display: "block", marginBottom: "16px" }}>
-        {label}
-        <select
-          name={name}
-          value={form[name] ?? ""}
-          onChange={handleChange}
-          style={inputStyle}
-        >
-          <option value="">Pilih {label}</option>
-          {form[name] &&
-            !options.some((option) => option.value === form[name]) && (
-              <option value={form[name]}>{form[name]}</option>
-            )}
-          {options.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
-      </label>
-    );
-  }
 
   if (loading) {
     return (
@@ -294,9 +296,9 @@ export default function EditProdukPage() {
           <section style={sectionStyle}>
             <h2 style={headingStyle}>Informasi Produk</h2>
 
-            <InputField label="Nama Produk" name="name" />
-            <InputField label="Brand" name="brand" />
-            <InputField label="Harga" name="price" type="number" />
+            <InputField form={form} onChange={handleChange} label="Nama Produk" name="name" />
+            <InputField form={form} onChange={handleChange} label="Brand" name="brand" />
+            <InputField form={form} onChange={handleChange} label="Harga" name="price" type="number" />
 
             <label style={labelStyle}>
               Deskripsi Produk
@@ -397,7 +399,7 @@ export default function EditProdukPage() {
           <section style={sectionStyle}>
             <h2 style={headingStyle}>Status dan Kondisi</h2>
 
-            <SelectField
+            <SelectField form={form} onChange={handleChange}
               label="Status Produk"
               name="status"
               options={[
@@ -408,39 +410,39 @@ export default function EditProdukPage() {
               ]}
             />
 
-            <InputField label="Umur Unit" name="unitAge" />
+            <InputField form={form} onChange={handleChange} label="Umur Unit" name="unitAge" />
 
-            <SelectField
+            <SelectField form={form} onChange={handleChange}
               label="Kondisi Umum"
               name="condition"
               options={conditionOptions}
             />
 
-            <SelectField
+            <SelectField form={form} onChange={handleChange}
               label="Kondisi Fisik"
               name="physicalCondition"
               options={conditionOptions}
             />
 
-            <SelectField
+            <SelectField form={form} onChange={handleChange}
               label="Kondisi Layar"
               name="screenCondition"
               options={conditionOptions}
             />
 
-            <SelectField
+            <SelectField form={form} onChange={handleChange}
               label="Kondisi Baterai"
               name="batteryCondition"
               options={conditionOptions}
             />
 
-            <SelectField
+            <SelectField form={form} onChange={handleChange}
               label="Kondisi Strap"
               name="strapCondition"
               options={conditionOptions}
             />
 
-            <SelectField
+            <SelectField form={form} onChange={handleChange}
               label="Tes Baterai"
               name="batteryTest"
               options={[
@@ -451,7 +453,7 @@ export default function EditProdukPage() {
               ]}
             />
 
-            <SelectField
+            <SelectField form={form} onChange={handleChange}
               label="Tipe Garansi"
               name="warrantyType"
               options={[
@@ -461,7 +463,7 @@ export default function EditProdukPage() {
                 { value: "TANPA_GARANSI", label: "Tidak Ada Garansi" },
               ]}
             />
-            <InputField
+            <InputField form={form} onChange={handleChange}
               label="Garansi Pabrik Hingga"
               name="manufacturerWarrantyUntil"
               type="date"

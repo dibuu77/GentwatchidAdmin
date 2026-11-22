@@ -68,6 +68,58 @@ const headingStyle = {
   color: "#263d30",
 };
 
+function InputField({
+  label,
+  name,
+  type = "text",
+  required = false,
+  form,
+  onChange,
+}) {
+  return (
+    <label style={labelStyle}>
+      {label}
+      <input
+        type={type}
+        name={name}
+        value={form[name] ?? ""}
+        onChange={onChange}
+        required={required}
+        style={inputStyle}
+      />
+    </label>
+  );
+}
+
+function SelectField({
+  label,
+  name,
+  options,
+  required = false,
+  form,
+  onChange,
+}) {
+  return (
+    <label style={labelStyle}>
+      {label}
+      <select
+        name={name}
+        value={form[name] ?? ""}
+        onChange={onChange}
+        required={required}
+        style={inputStyle}
+      >
+        <option value="">Pilih {label}</option>
+        {options.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
 export default function TambahProdukPage() {
   const router = useRouter();
   const [form, setForm] = useState(initialForm);
@@ -183,44 +235,6 @@ export default function TambahProdukPage() {
     }
   }
 
-  function InputField({ label, name, type = "text", required = false }) {
-    return (
-      <label style={labelStyle}>
-        {label}
-        <input
-          type={type}
-          name={name}
-          value={form[name] ?? ""}
-          onChange={handleChange}
-          required={required}
-          style={inputStyle}
-        />
-      </label>
-    );
-  }
-
-  function SelectField({ label, name, options, required = false }) {
-    return (
-      <label style={labelStyle}>
-        {label}
-        <select
-          name={name}
-          value={form[name] ?? ""}
-          onChange={handleChange}
-          required={required}
-          style={inputStyle}
-        >
-          <option value="">Pilih {label}</option>
-          {options.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
-      </label>
-    );
-  }
-
   return (
     <div
       style={{
@@ -243,7 +257,7 @@ export default function TambahProdukPage() {
         <form onSubmit={handleSubmit}>
           <section style={sectionStyle}>
             <h2 style={headingStyle}>Informasi Produk</h2>
-            <InputField label="Nama Produk" name="name" required />
+            <InputField form={form} onChange={handleChange} label="Nama Produk" name="name" required />
             <label style={labelStyle}>
               Brand
               <select
@@ -296,8 +310,8 @@ export default function TambahProdukPage() {
                 style={{ ...inputStyle, background: "#f3f3f3", resize: "vertical" }}
               />
             </label>
-            <InputField label="Harga" name="price" type="number" required />
-            <InputField label="Umur Unit" name="unitAge" />
+            <InputField form={form} onChange={handleChange} label="Harga" name="price" type="number" required />
+            <InputField form={form} onChange={handleChange} label="Umur Unit" name="unitAge" />
 
             <label style={labelStyle}>
               Foto Produk
@@ -328,30 +342,30 @@ export default function TambahProdukPage() {
 
           <section style={sectionStyle}>
             <h2 style={headingStyle}>Status dan Kondisi</h2>
-            <SelectField label="Status Produk" name="status" options={[
+            <SelectField form={form} onChange={handleChange} label="Status Produk" name="status" options={[
               { value: "AVAILABLE", label: "Tersedia" },
               { value: "RESERVED", label: "Booking" },
               { value: "SOLD", label: "Terjual" },
               { value: "UNAVAILABLE", label: "Tidak Tersedia" },
             ]} />
-            <SelectField label="Kondisi Umum" name="condition" options={conditionOptions} />
-            <SelectField label="Kondisi Fisik" name="physicalCondition" options={conditionOptions} />
-            <SelectField label="Kondisi Layar" name="screenCondition" options={conditionOptions} />
-            <SelectField label="Kondisi Baterai" name="batteryCondition" options={conditionOptions} />
-            <SelectField label="Kondisi Strap" name="strapCondition" options={conditionOptions} />
-            <SelectField label="Tes Baterai" name="batteryTest" options={[
+            <SelectField form={form} onChange={handleChange} label="Kondisi Umum" name="condition" options={conditionOptions} />
+            <SelectField form={form} onChange={handleChange} label="Kondisi Fisik" name="physicalCondition" options={conditionOptions} />
+            <SelectField form={form} onChange={handleChange} label="Kondisi Layar" name="screenCondition" options={conditionOptions} />
+            <SelectField form={form} onChange={handleChange} label="Kondisi Baterai" name="batteryCondition" options={conditionOptions} />
+            <SelectField form={form} onChange={handleChange} label="Kondisi Strap" name="strapCondition" options={conditionOptions} />
+            <SelectField form={form} onChange={handleChange} label="Tes Baterai" name="batteryTest" options={[
               { value: "NORMAL", label: "Normal" },
               { value: "BAIK", label: "Baik" },
               { value: "MENURUN", label: "Menurun" },
               { value: "BELUM_DITES", label: "Belum Dites" },
             ]} />
-            <SelectField label="Tipe Garansi" name="warrantyType" options={[
+            <SelectField form={form} onChange={handleChange} label="Tipe Garansi" name="warrantyType" options={[
               { value: "GARANSI_RESMI", label: "Garansi Resmi" },
               { value: "GARANSI_TOKO", label: "Garansi Toko" },
               { value: "GARANSI_DISTRIBUTOR", label: "Garansi Distributor" },
               { value: "TANPA_GARANSI", label: "Tidak Ada Garansi" },
             ]} />
-            <InputField label="Garansi Pabrik Hingga" name="manufacturerWarrantyUntil" type="date" />
+            <InputField form={form} onChange={handleChange} label="Garansi Pabrik Hingga" name="manufacturerWarrantyUntil" type="date" />
             <label style={labelStyle}>
               Catatan Minus / Defect
               <textarea name="defects" value={form.defects} onChange={handleChange} rows={4} style={inputStyle} />
