@@ -1,3 +1,4 @@
+
 import { NextResponse } from "next/server";
 import cloudinary from "@/lib/cloudinary";
 
@@ -10,7 +11,10 @@ export async function POST(request) {
 
     if (!files.length) {
       return NextResponse.json(
-        { success: false, message: "Tidak ada foto yang diunggah" },
+        {
+          success: false,
+          message: "Silakan pilih foto terlebih dahulu.",
+        },
         { status: 400 }
       );
     }
@@ -20,14 +24,20 @@ export async function POST(request) {
     for (const file of files) {
       if (!(file instanceof File) || !file.type.startsWith("image/")) {
         return NextResponse.json(
-          { success: false, message: "File harus berupa gambar" },
+          {
+            success: false,
+            message: `File "${file.name || "tidak dikenal"}" bukan gambar. Gunakan format JPG, PNG, atau WEBP.`,
+          },
           { status: 400 }
         );
       }
 
       if (file.size > 5 * 1024 * 1024) {
         return NextResponse.json(
-          { success: false, message: "Ukuran foto maksimal 5 MB" },
+          {
+            success: false,
+            message: `Foto "${file.name}" melebihi batas 5 MB. Silakan pilih foto dengan ukuran lebih kecil.`,
+          },
           { status: 400 }
         );
       }
@@ -35,13 +45,18 @@ export async function POST(request) {
       const buffer = Buffer.from(await file.arrayBuffer());
 
       const result = await new Promise((resolve, reject) => {
-        cloudinary.uploader.upload_stream(
-          { folder: "donstore/products", resource_type: "image" },
-          (error, result) => {
-            if (error) reject(error);
-            else resolve(result);
-          }
-        ).end(buffer);
+        cloudinary.uploader
+          .upload_stream(
+            {
+              folder: "donstore/products",
+              resource_type: "image",
+            },
+            (error, result) => {
+              if (error) reject(error);
+              else resolve(result);
+            }
+          )
+          .end(buffer);
       });
 
       uploadedImages.push(result.secure_url);
@@ -55,7 +70,10 @@ export async function POST(request) {
     console.error("Upload error:", error);
 
     return NextResponse.json(
-      { success: false, message: "Gagal mengunggah foto" },
+      {
+        success: false,
+        message: "Gagal mengunggah foto. Silakan coba kembali.",
+      },
       { status: 500 }
     );
   }
